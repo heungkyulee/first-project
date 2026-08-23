@@ -1,0 +1,35 @@
+name: samsung-hynix-yahoo-event
+on:
+  pull_request:
+    paths:
+      - yahoo_event.py
+      - yahoo-trigger.txt
+      - .github/workflows/yahoo-event.yml
+  workflow_dispatch:
+
+jobs:
+  event-study:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install
+        run: pip install pandas numpy requests yfinance
+      - name: Run event study
+        run: python yahoo_event.py
+      - name: Print results
+        if: always()
+        run: |
+          cat yahoo_results/event_study.csv || true
+          cat yahoo_results/crosscheck.json || true
+          cat yahoo_results/naver_yahoo_crosscheck.csv || true
+      - name: Upload
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: yahoo-event-results
+          path: yahoo_results/
+          retention-days: 7
