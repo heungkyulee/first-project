@@ -1,0 +1,38 @@
+name: free-intraday-backtest
+on:
+  push:
+    paths:
+      - backtest.py
+      - .github/workflows/backtest.yml
+  workflow_dispatch:
+
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: pip install pandas numpy requests duckdb pyarrow tabulate
+      - name: Run backtest
+        run: python backtest.py
+      - name: Show summary
+        if: always()
+        run: |
+          echo '--- SUMMARY ---'
+          cat results/SUMMARY.md || true
+          echo '--- NAVER PROBE ---'
+          cat results/naver_probe.json || true
+          echo '--- HF DOWNLOAD ---'
+          cat results/hf_download.json || true
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backtest-results
+          path: results/
+          if-no-files-found: warn
+          retention-days: 7
