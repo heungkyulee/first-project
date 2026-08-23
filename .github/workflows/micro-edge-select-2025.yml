@@ -1,0 +1,38 @@
+name: hydra-micro-edge-select-2025
+on:
+  pull_request:
+    paths:
+      - 'micro/edge_select_2025.py'
+      - '.github/workflows/micro-edge-select-2025.yml'
+  workflow_dispatch:
+
+jobs:
+  edge:
+    strategy:
+      fail-fast: false
+      matrix:
+        asset: [BTCUSDT, ETHUSDT, SOLUSDT, XRPUSDT]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      ASSET: ${{ matrix.asset }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install
+        run: pip install pandas numpy requests scikit-learn pyarrow tabulate
+      - name: Run validation-selected economic edge test
+        run: python micro/edge_select_2025.py
+      - name: Show result
+        if: always()
+        run: cat micro_edge25_${ASSET}/SUMMARY.md || true
+      - name: Upload
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: micro-edge25-${{ matrix.asset }}
+          path: micro_edge25_${{ matrix.asset }}/
+          if-no-files-found: warn
+          retention-days: 7
