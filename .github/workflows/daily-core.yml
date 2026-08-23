@@ -1,0 +1,43 @@
+name: hydra-daily-core
+on:
+  pull_request:
+    paths:
+      - daily_core.py
+      - daily-trigger.txt
+      - .github/workflows/daily-core.yml
+  workflow_dispatch:
+
+jobs:
+  daily-core:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: pip install pandas numpy requests pyarrow
+      - name: Run long-horizon core
+        run: python daily_core.py
+      - name: Print OOS metrics
+        if: always()
+        run: |
+          echo '--- STOCK METRICS ---'
+          cat daily_results/metrics.csv || true
+          echo '--- PORTFOLIO METRICS ---'
+          cat daily_results/portfolio_metrics.csv || true
+          echo '--- DEFINITIONS ---'
+          cat daily_results/DEFINITIONS.json || true
+          echo '--- DOWNLOADS ---'
+          cat daily_results/price_download.json || true
+          cat daily_results/flow_download.json || true
+          cat daily_results/short_download.json || true
+      - name: Upload daily results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hydra-daily-core-results
+          path: daily_results/
+          if-no-files-found: warn
+          retention-days: 7
