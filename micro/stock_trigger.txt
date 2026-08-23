@@ -1,0 +1,1 @@
+run stock-linked perp transfer test 2026-08-24
