@@ -4,6 +4,11 @@ on:
     paths:
       - backtest.py
       - .github/workflows/backtest.yml
+  pull_request:
+    paths:
+      - backtest.py
+      - .github/workflows/backtest.yml
+      - trigger.txt
   workflow_dispatch:
 
 jobs:
