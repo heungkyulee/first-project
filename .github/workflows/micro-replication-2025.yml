@@ -1,0 +1,38 @@
+name: hydra-micro-replication-2025
+on:
+  pull_request:
+    paths:
+      - 'micro/replicate_2025.py'
+      - '.github/workflows/micro-replication-2025.yml'
+  workflow_dispatch:
+
+jobs:
+  replicate:
+    strategy:
+      fail-fast: false
+      matrix:
+        asset: [BTCUSDT, ETHUSDT, SOLUSDT, XRPUSDT]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      ASSET: ${{ matrix.asset }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install
+        run: pip install pandas numpy requests scikit-learn pyarrow tabulate
+      - name: Run frozen 2025 replication
+        run: python micro/replicate_2025.py
+      - name: Show result
+        if: always()
+        run: cat micro_rep25_${ASSET}/SUMMARY.md || true
+      - name: Upload
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: micro-rep25-${{ matrix.asset }}
+          path: micro_rep25_${{ matrix.asset }}/
+          if-no-files-found: warn
+          retention-days: 7
