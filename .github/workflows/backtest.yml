@@ -1,12 +1,8 @@
 name: free-intraday-backtest
 on:
-  push:
-    paths:
-      - backtest.py
-      - .github/workflows/backtest.yml
   pull_request:
     paths:
-      - backtest.py
+      - round2.py
       - .github/workflows/backtest.yml
       - trigger.txt
   workflow_dispatch:
@@ -21,23 +17,29 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install dependencies
-        run: pip install pandas numpy requests duckdb pyarrow tabulate
-      - name: Run backtest
-        run: python backtest.py
-      - name: Show summary
+        run: pip install pandas numpy requests duckdb pyarrow tabulate yfinance
+      - name: Run extended validation
+        run: python round2.py
+      - name: Show results
         if: always()
         run: |
-          echo '--- SUMMARY ---'
-          cat results/SUMMARY.md || true
-          echo '--- NAVER PROBE ---'
-          cat results/naver_probe.json || true
-          echo '--- HF DOWNLOAD ---'
-          cat results/hf_download.json || true
+          echo '--- EVENT STUDY ---'
+          cat results2/event_study.csv || true
+          echo '--- NAVER RETENTION ---'
+          cat results2/naver_retention.json || true
+          echo '--- BIGDB INVENTORY ---'
+          cat results2/bigdb_inventory.csv || true
+          echo '--- YAHOO LOG ---'
+          cat results2/yfinance_log.json || true
+          echo '--- CROSSCHECK ---'
+          cat results2/crosscheck_summary.json || true
+          echo '--- BIGDB DOWNLOAD ---'
+          cat results2/bigdb_download.json || true
       - name: Upload results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: backtest-results
-          path: results/
+          name: round2-results
+          path: results2/
           if-no-files-found: warn
           retention-days: 7
