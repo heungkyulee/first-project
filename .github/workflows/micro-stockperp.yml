@@ -1,0 +1,40 @@
+name: hydra-micro-stockperp
+on:
+  pull_request:
+    paths:
+      - 'micro/stock_trigger.txt'
+      - 'micro/backtest_micro.py'
+      - 'micro/economic.py'
+      - '.github/workflows/micro-stockperp.yml'
+  workflow_dispatch:
+
+jobs:
+  stockperp:
+    strategy:
+      fail-fast: false
+      matrix:
+        asset: [MSTRUSDT, COINUSDT, PLTRUSDT]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      ASSET: ${{ matrix.asset }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install
+        run: pip install pandas numpy requests scikit-learn pyarrow tabulate
+      - name: Run economic test
+        run: python micro/economic.py
+      - name: Show result
+        if: always()
+        run: cat micro_econ_${ASSET}/SUMMARY.md || true
+      - name: Upload
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stockperp-${{ matrix.asset }}
+          path: micro_econ_${{ matrix.asset }}/
+          if-no-files-found: warn
+          retention-days: 7
